@@ -7,3 +7,5 @@ A web platform dedicated to managing invoices and product warranties has a signi
 By centralizing all invoices in one place, users will no longer have to search for papers or worry about losing an important document. Furthermore, by digitizing warranties, consumers will have the ability to track their validity periods and receive timely notifications about their expiration, thus avoiding the risk of missing an important deadline.
 
 Another key advantage of such a platform is increased accessibility and data security. The fact that all information is stored in a digital environment means that it is easier to access and protect against accidental loss or damage to physical documents.
+
+For the development of the platform, I used a RESTful API with PHP and the Laravel framework for the backend. For the frontend, I utilized VUE.js, Tailwind CSS for a modern and responsive design, and integrated Axios for communication with the backend and handling HTTP requests. This combination of technologies ensures high performance, scalability, and a smooth and intuitive user experience.
