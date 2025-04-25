@@ -25,7 +25,7 @@ class WarrantyFactory extends Factory
             'warranty_id' => $this->faker->uuid(),
             'invoice_number' => $this->faker->numerify('INV-####'),
             'product_name' => $this->faker->word(),
-            'seller' => $this->faker->randomElement(['EMAG', 'ALTEX', 'VEXIO', 'FLANCO', 'ITGALAXY', 'IPON']),
+            'seller' => $this->faker->randomElement(['Amazonia', 'WallMag', 'SMag', 'vBay']),
             'customer_name' => $this->faker->name(),
             'date_purchase' => $this->faker->date(),
             'warranty_end_date' => $this->faker->date(),

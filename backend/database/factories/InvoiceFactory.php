@@ -22,7 +22,7 @@ class InvoiceFactory extends Factory
             'user_id' => 5,
             'invoice_number' => $this->faker->numerify('INV-####'),
             'products_name' => $this->faker->word(),
-            'seller' => $this->faker->randomElement(['EMAG', 'ALTEX', 'VEXIO', 'FLANCO', 'ITGALAXY', 'IPON']),
+            'seller' => $this->faker->randomElement(['Amazonia', 'WallMag', 'SMag', 'vBay']),
             'value' => $this->faker->randomFloat(),
             'currency' => $this->faker->randomElement(['RON', 'EUR', 'USD', 'GBP']),
             'customer_name' => $this->faker->name(),

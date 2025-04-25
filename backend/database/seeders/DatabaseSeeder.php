@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ActionHistory;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Models\Warranty;
@@ -26,5 +27,6 @@ class DatabaseSeeder extends Seeder
 
         Invoice::factory()->count(1)->create();
 
+        ActionHistory::factory()->count(4)->create();
     }
 }
