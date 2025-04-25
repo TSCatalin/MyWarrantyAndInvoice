@@ -10,11 +10,11 @@ Another major advantage is enhanced accessibility and data security. Since infor
 
 Technologies used:
 
-Backend: PHP, Laravel, RESTful API
+- Backend: PHP, Laravel, RESTful API
 
-Frontend: Vue.js, Tailwind CSS for a modern and responsive design
+- Frontend: Vue.js, Tailwind CSS for a modern and responsive design
 
-Communication between frontend and backend: Axios
+- Communication between frontend and backend: Axios
 
 This combination of technologies ensures high performance, scalability, and a smooth, intuitive user experience.
 ## Screenshots
