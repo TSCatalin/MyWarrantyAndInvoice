@@ -14,3 +14,39 @@ For the development of the platform, I used a RESTful API with PHP and the Larav
 
 ### Welcome Page
 ![HomeGuest](images/HomeGuest.png) 
+
+### About Page
+![AboutGuest](images/AboutGuest.png)
+
+### FAQ Page
+![FAQGuest](images/FAQGuest.png)
+
+### Register Page
+![RegisterGuest](images/RegisterGuest.png)
+
+### Dashboard Page
+![DashboardAuth](images/DashboardAuth.png)
+
+### History Page
+![HistoryAuth](images/HistoryAuth.png)
+
+### Warranties Page
+![WarrantyAuth](images/WarrantyAuth.png)
+
+### Warranty View Page
+![ShowWarrantyAuth](images/ShowWarrantyAuth.png)
+
+### Warranty Add Page
+![AddWarrantyAuth](images/AddWarrantyAuth.png)
+
+### Invoices Page
+![InvoiceAuth](images/InvoiceAuth.png)
+
+### Invoice View Page
+![ShowInvoiceAuth](images/ShowInvoiceAuth.png)
+
+### Invoice Add Page
+![AddInvoiceAuth](images/AddInvoiceAuth.png)
+
+### Profile Page
+![ProfileAuth](images/ProfileAuth.png)
