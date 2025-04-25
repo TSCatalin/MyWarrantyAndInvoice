@@ -8,19 +8,22 @@ By centralizing all invoices in one place, users no longer need to search for ph
 
 Another major advantage is enhanced accessibility and data security. Since information is stored in a digital environment, it is easier to access and protect against loss or damage to physical documents.
 
-Technologies used:
+## Technologies Used
 
-- Backend: PHP, Laravel, RESTful API
-
-- Frontend: Vue.js, Tailwind CSS for a modern and responsive design
-
-- Communication between frontend and backend: Axios
+- **Backend:** PHP, Laravel, RESTful API  
+- **Frontend:** Vue.js, Tailwind CSS for a modern and responsive design  
+- **Communication between frontend and backend:** Axios  
 
 This combination of technologies ensures high performance, scalability, and a smooth, intuitive user experience.
+
+## Status
+
+**Note:** The project is still under development, and new features are being added regularly.
+
 ## Screenshots
 
 ### Welcome Page
-![HomeGuest](images/HomeGuest.png) 
+![HomeGuest](images/HomeGuest.png)
 
 ### About Page
 ![AboutGuest](images/AboutGuest.png)
@@ -57,3 +60,14 @@ This combination of technologies ensures high performance, scalability, and a sm
 
 ### Profile Page
 ![ProfileAuth](images/ProfileAuth.png)
+
+## Usage
+
+Once the application is up and running, you can:
+
+- Add new invoices and warranties.
+- View and track the expiration dates of your warranties.
+- Receive notifications when warranties are about to expire.
+- View your profile and manage your account details.
+
+Use the **Dashboard** to see all your invoices and warranties in one place.
