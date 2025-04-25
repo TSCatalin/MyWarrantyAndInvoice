@@ -70,4 +70,4 @@ Once the application is up and running, you can:
 - Receive notifications when warranties are about to expire.
 - View your profile and manage your account details.
 
-Use the **Dashboard** to see all your invoices and warranties in one place..
+Use the **Dashboard** to see all your invoices and warranties in one place.
