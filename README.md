@@ -2,14 +2,21 @@
 
 ## Description
 
-A web platform dedicated to managing invoices and product warranties has a significant impact on how users can organize and track their expenses, as well as the rights associated with the products they purchase. In an ever-expanding digital age, where efficient resource management is becoming increasingly important, such a platform can offer convenient and accessible solutions.
+This web platform is dedicated to managing invoices and product warranties, providing users with an efficient way to organize their expenses and track the rights associated with their purchases. In an ever-expanding digital landscape, where efficient resource management is becoming increasingly important, the platform offers practical and easily accessible solutions.
 
-By centralizing all invoices in one place, users will no longer have to search for papers or worry about losing an important document. Furthermore, by digitizing warranties, consumers will have the ability to track their validity periods and receive timely notifications about their expiration, thus avoiding the risk of missing an important deadline.
+By centralizing all invoices in one place, users no longer need to search for physical documents or worry about losing them. Additionally, by digitizing warranties, users can easily monitor validity periods and receive notifications when expiration dates are approaching, helping them avoid losing valuable rights.
 
-Another key advantage of such a platform is increased accessibility and data security. The fact that all information is stored in a digital environment means that it is easier to access and protect against accidental loss or damage to physical documents.
+Another major advantage is enhanced accessibility and data security. Since information is stored in a digital environment, it is easier to access and protect against loss or damage to physical documents.
 
-For the development of the platform, I used a RESTful API with PHP and the Laravel framework for the backend. For the frontend, I utilized VUE.js, Tailwind CSS for a modern and responsive design, and integrated Axios for communication with the backend and handling HTTP requests. This combination of technologies ensures high performance, scalability, and a smooth and intuitive user experience.
+Technologies used:
 
+Backend: PHP, Laravel, RESTful API
+
+Frontend: Vue.js, Tailwind CSS for a modern and responsive design
+
+Communication between frontend and backend: Axios
+
+This combination of technologies ensures high performance, scalability, and a smooth, intuitive user experience.
 ## Screenshots
 
 ### Welcome Page
