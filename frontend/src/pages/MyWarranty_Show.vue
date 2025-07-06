@@ -1,33 +1,30 @@
 <script setup>
-import axiosClient from "../axios";
 import { onMounted, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute} from "vue-router";
 import router from "../router";
+import { useWarrantyStore } from "../store/warrantyStore";
 
+const warrantyStore = useWarrantyStore();
 const warranty = ref({});
 
 const route = useRoute();
 const warrantyId = route.params.id;
 const loading = ref(true);
 
-onMounted(() => {
-  axiosClient
-    .get(`/api/warranty/${warrantyId}`)
-    .then((response) => {
-      warranty.value = response.data.data;
-      loading.value = false;
-    })
-    .catch((error) => {
-      console.error("Error retrieving the warranty:", error.response);
-      loading.value = false;
-      if (error.response && error.response.status === 500) {
-        console.error("Server error:", error.response.data);
-      }
-      if (error.response && error.response.status === 404) {
-        router.push("/not-found");
-      }
-    });
+onMounted(async () => {
+  const result = await warrantyStore.fetchWarranty(warrantyId);
+
+  if (result.notFound) {
+    router.push("/not-found");
+  }
+
+  if (result.serverError) {
+    loading.value = false;
+  }
+  warranty.value = warrantyStore.warranty || {};
+  loading.value = false;
 });
+
 
 const isImage = (file) => {
   if (file.startsWith("data:")) {
@@ -46,9 +43,11 @@ const isPDF = (file) => {
   if (file.startsWith("data:application/pdf")) {
     return true;
   }
+
   if (file.startsWith("JVBERi0xL")) {
     return true;
   }
+
   return false;
 };
 
@@ -61,9 +60,11 @@ const isWord = (file) => {
   ) {
     return true;
   }
+
   if (file.startsWith("D0CF11E0A1B11AE1")) {
     return true;
   }
+
   if (file.startsWith("UEsDBB")) {
     return true;
   }
@@ -74,22 +75,25 @@ const getImageSrc = (file) => {
   if (file.startsWith("data:image/")) {
     return file;
   }
+
   if (file.startsWith("iVBORw0KGgoAAA")) {
     return "data:image/png;base64," + file;
   } else if (file.startsWith("/9j/4AAQ")) {
     return "data:image/jpeg;base64," + file;
   }
+
   return "data:image/png;base64," + file;
 };
 
 const getPDFSrc = (file) => {
-  console.log("TEST PDF");
   if (file.startsWith("JVBERi0xL")) {
     return "data:application/pdf;base64," + file;
   }
+
   if (file.startsWith("data:application/pdf;base64,")) {
     return file;
   }
+
   return "";
 };
 
@@ -102,15 +106,18 @@ const getWordSrc = (file) => {
   ) {
     return file;
   }
+
   if (file.startsWith("D0CF11E0A1B11AE1")) {
     return "data:application/msword;base64," + file;
   }
+
   if (file.startsWith("UEsDBB")) {
     return (
       "data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64," +
       file
     );
   }
+
   return "data:application/msword;base64," + file;
 };
 </script>

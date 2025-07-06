@@ -1,32 +1,14 @@
 <script setup>
-import axiosClient from "../axios";
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import router from "../router";
 import { useRoute } from "vue-router";
 import { TailwindPagination } from "laravel-vue-pagination";
-
-const invoice = ref([]);
-const sellers = ref([]);
-const pagination = ref({
-  current_page: 1,
-  last_page: 1,
-});
+import { useInvoiceStore } from "../store/invoiceStore";
 
 const route = useRoute();
+const invoiceStore = useInvoiceStore();
 
-function deleteImage(id) {
-  if (!confirm("Are you sure you want to delete this Invoice?")) {
-    return;
-  }
-  console.log(id);
-  axiosClient.delete(`/api/invoice/${id}`).then((response) => {
-    location.reload();
-  });
-}
-
-const loading = ref(true);
-const loadingInvoice = ref(false);
-
+const sellers = ref([]);
 const showFilters = ref(false);
 
 const filters = ref({
@@ -35,79 +17,69 @@ const filters = ref({
   sortBy: "",
 });
 
-onMounted(() => {
-  fetchInvoiceData();
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
 });
 
-const toggleFilterVisibility = () => {
-  showFilters.value = !showFilters.value;
+const fetchInvoiceData = async (page = 1) => {
+  await invoiceStore.fetchAll(filters.value, page);
+
+  sellers.value = invoiceStore.sellers || [];
+  pagination.value.current_page = invoiceStore.pagination.current_page;
+  pagination.value.last_page = invoiceStore.pagination.last_page;
 };
 
-const fetchInvoiceData = (page = 1) => {
-  let params = {
-    seller: filters.value.seller,
-    status: filters.value.status,
-    product_name: filters.value.product_name,
-    sortBy: filters.value.sortBy,
-    page: page,
-  };
-
-  router.push({
-    name: "MyInvoice",
-    query: { ...params, page: page },
-  });
-  axiosClient
-    .get("/api/invoice", { params })
-    .then((response) => {
-      invoice.value = response.data;
-      sellers.value = response.data.seller;
-      pagination.value.current_page = response.data.meta.current_page;
-      pagination.value.last_page = response.data.meta.last_page;
-
-      if (invoice.value.data.length === 0) {
-        loadingInvoice.value = false;
-      } else {
-        loadingInvoice.value = true;
-      }
-
-      loading.value = false;
-    })
-    .catch((error) => {
-      console.error("Error fetching invoice data:", error);
-      loading.value = false;
-    });
+const deleteInvoice = async (id) => {
+  await invoiceStore.deleteInvoice(id);
 };
 
-const resetFilters = () => {
-  filters.value.seller = "";
-  filters.value.product_name = "";
-  filters.value.sortBy = "";
-
-  router.push({
-    name: "MyInvoice",
-    query: {},
-  });
-
-  fetchInvoiceData();
-};
-
-const truncateProductName = (name) => {
-  return name.length > 11 ? name.substring(0, 11) + "..." : name;
+const applyFilters = () => {
+  router.push({ name: "MyInvoice", query: { ...filters.value, page: 1 } });
 };
 
 watch(
   () => route.query,
   (newQuery) => {
-    filters.value.seller = newQuery.seller || "";
-    filters.value.product_name = newQuery.product_name || "";
-    filters.value.sortBy = newQuery.sortBy || "";
+    const {
+      seller = "",
+      product_name = "",
+      sortBy = "",
+      page = "1",
+    } = newQuery;
 
-    const page = parseInt(newQuery.page) || 1;
-    fetchInvoiceData(page);
+    filters.value = { seller, product_name, sortBy };
+    const pageNumber = isNaN(parseInt(page)) ? 1 : parseInt(page);
+
+    fetchInvoiceData(pageNumber);
   },
   { immediate: true }
 );
+
+const resetFilters = () => {
+  filters.value = {
+    seller: "",
+    product_name: "",
+    sortBy: "",
+  };
+
+  router.push({
+    name: "MyInvoice",
+    query: {
+      page: 1,
+    },
+  });
+};
+
+const toggleFilterVisibility = () => {
+  showFilters.value = !showFilters.value;
+};
+
+const truncateProductName = (name) => {
+  return name.length > 11 ? name.substring(0, 11) + "..." : name;
+};
 </script>
+
 
 <template>
   <header class="bg-white shadow">
@@ -139,7 +111,7 @@ watch(
   </header>
   <main>
     <div
-      v-if="loadingWarranties || sellers.length > 1"
+      v-if="invoiceStore.loadingInvoice || sellers.length > 1"
       class="max-w-7xl mx-auto"
     >
       <div class="bg-white shadow-lg pl-4 sm:pl-12 pr-12 pb-2 pt-2">
@@ -187,7 +159,7 @@ watch(
                   <select
                     v-model="filters.seller"
                     id="seller"
-                    @change="fetchInvoiceData"
+                    @change="applyFilters"
                     class="w-full p-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-200 bg-white text-black"
                   >
                     <option value="" class="text-gray-300">
@@ -208,7 +180,7 @@ watch(
                   <select
                     v-model="filters.sortBy"
                     id="sortBy"
-                    @change="fetchInvoiceData"
+                    @change="applyFilters"
                     class="w-full p-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-200 bg-white text-black"
                   >
                     <option value="" class="text-gray-300">Sort by</option>
@@ -263,13 +235,14 @@ watch(
                         d="M8 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM12 12l5 5"
                       />
                     </svg>
+
                     <input
                       type="search"
                       id="default-search"
                       class="block w-full pl-10 pr-4 py-4 text-sm bg-white text-black placeholder:text-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-200"
                       placeholder="Search Product"
                       v-model="filters.product_name"
-                      @keydown.enter="fetchInvoiceData"
+                      @keydown.enter="applyFilters"
                     />
                   </div>
                 </div>
@@ -290,7 +263,7 @@ watch(
       </div>
     </div>
 
-    <div v-if="loading" class="px-5 py-4 flex justify-center">
+    <div v-if="invoiceStore.loading" class="px-5 py-4 flex justify-center">
       <button
         disabled
         type="button"
@@ -319,11 +292,11 @@ watch(
     </div>
     <div v-else class="px-4 py-6 sm:px-24 md:px-6 lg:px-10">
       <div
-        v-if="loadingInvoice"
+        v-if="invoiceStore.loadingInvoice"
         class="grid grid-cols-1 md:grid-cols-2 gap-8 p-4"
       >
         <div
-          v-for="inov in invoice.data"
+          v-for="inov in invoiceStore.invoice.data"
           :key="inov.id"
           class="bg-white shadow-lg rounded-lg border-2 border-neutral-200 hover:border-yellow-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
         >
@@ -448,7 +421,7 @@ watch(
               </RouterLink>
 
               <button
-                @click="deleteImage(inov.id)"
+                @click="deleteInvoice(inov.id)"
                 class="px-4 py-2 text-center rounded-lg text-base font-medium text-gray-900 bg-white border border-neutral-300 focus:outline-none hover:border-amber-300 hover:bg-yellow-300 hover:shadow-md transition-all duration-200 ease-in-out w-full sm:w-auto"
               >
                 Delete
@@ -477,7 +450,7 @@ watch(
       </div>
       <div class="text-center py-2">
         <TailwindPagination
-          :data="invoice"
+          :data="invoiceStore.invoice"
           @pagination-change-page="fetchInvoiceData"
         />
       </div>

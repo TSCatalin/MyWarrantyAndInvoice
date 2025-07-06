@@ -20,6 +20,11 @@ import AboutGuest from "./pages/AboutGuest.vue";
 import ContactGuest from "./pages/ContactGuest.vue";
 import FAQGuest from "./pages/FAQGuest.vue";
 import History from "./pages/History.vue";
+import Notifications from "./pages/Notifications.vue";
+import Notifications_Show from "./pages/Notifications_Show.vue";
+import EmailVerificationNotice from "./pages/EmailVerificationNotice.vue";
+import ForgotPassword from "./pages/ForgotPassword.vue";
+import ResetPassword from "./pages/ResetPassword.vue";
 
 const routes = [
   {
@@ -84,6 +89,16 @@ const routes = [
         component: History,
       },
       {
+        path: "notifications",
+        name: "Notifications",
+        component: Notifications,
+      },
+      {
+        path: "notifications_show/:id",
+        name: "Notifications_Show",
+        component: Notifications_Show,
+      },
+      {
         path: "profile",
         name: "YourProfile",
         component: YourProfile,
@@ -91,14 +106,26 @@ const routes = [
     ],
     beforeEnter: async (to, from, next) => {
       const userStore = useUserStore();
-      if (!userStore.user) {
-        try {
+      try {
+        if (!userStore.user) {
           await userStore.fetchUser();
-        } catch (error) {
-          next(false);
         }
+
+        const isLoggedIn = !!userStore.user;
+        const isVerified = !!userStore.user?.email_verified_at;
+
+        if (!isLoggedIn) {
+          return next({ name: "Login" });
+        }
+
+        if (!isVerified && to.name !== "EmailVerificationNotice") {
+          return next({ name: "EmailVerificationNotice" });
+        }
+
+        next();
+      } catch (error) {
+        return next({ name: "Login" });
       }
-      next();
     },
   },
 
@@ -107,6 +134,11 @@ const routes = [
     component: GuestLayout,
     children: [
       { path: "", name: "HomeGuest", component: HomeGuest },
+      {
+        path: "/verify-email",
+        name: "EmailVerificationNotice",
+        component: EmailVerificationNotice,
+      },
       {
         path: "/about",
         name: "AboutGuest",
@@ -132,6 +164,17 @@ const routes = [
         path: "/signup",
         name: "Signup",
         component: Signup,
+      },
+
+      {
+        path: "/forgot-password",
+        name: "ForgotPassword",
+        component: ForgotPassword,
+      },
+      {
+        path: "/password-reset/:token",
+        name: "ResetPassword",
+        component: ResetPassword,
       },
     ],
   },

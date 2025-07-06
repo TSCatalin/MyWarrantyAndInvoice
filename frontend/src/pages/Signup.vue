@@ -1,8 +1,10 @@
 <script setup>
-import axiosClient from "../axios";
 import { ref } from "vue";
 import router from "../router";
 import SignupImage from "../components/SignupImage.vue";
+import { useAuthStore } from "../store/authStore";
+
+const authStore = useAuthStore();
 
 const data = ref({
   name: "",
@@ -17,23 +19,20 @@ const errors = ref({
   password: [],
 });
 
-function submit() {
-  axiosClient.get("/sanctum/csrf-cookie").then((response) => {
-    axiosClient
-      .post("/register", data.value)
-      .then((response) => {
-        router.push({ name: "Home" });
-      })
-      .catch((error) => {
-        if (error.response) {
-          console.log(error.response);
-          errors.value = error.response.data.errors;
-        } else {
-          console.log("Error without response:", error);
-        }
-      });
-  });
-}
+const submit = async () => {
+  const result = await authStore.registerUser(data.value);
+  if (result.success) {
+    const userResult = await userStore.fetchUser();
+
+    if (userResult.verified) {
+      router.push({ name: "Home" });
+    } else {
+      router.push({ name: "EmailVerificationNotice" });
+    }
+  } else {
+    errors.value = result.errors;
+  }
+};
 </script>
 
 <template>
@@ -46,7 +45,6 @@ function submit() {
       <div
         class="w-full flex flex-col justify-center items-center pt-6 sm:pt-0 bg-white px-8"
       >
-        
         <h2
           class="mt-6 text-center text-3xl/9 font-bold tracking-tight text-gray-900 py-8"
         >

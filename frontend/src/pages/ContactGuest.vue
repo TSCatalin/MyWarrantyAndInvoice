@@ -1,3 +1,35 @@
+<script setup>
+import { ref } from "vue";
+import { useAuthStore } from "../store/authStore";
+import router from "../router";
+
+const authStore = useAuthStore();
+
+const errors = ref("");
+const data = ref({
+  first_name: "",
+  last_name: "",
+  email: "",
+  message: "",
+});
+const messageSuccess = ref("");
+
+async function submit() {
+  errors.value = {};
+
+  const result = await authStore.contactForm({ ...data.value });
+
+  if (result.success) {
+    messageSuccess.value = "Message sent successfully!";
+    setTimeout(() => {
+      router.push({ name: "Home" });
+    }, 5000);
+  } else {
+    errors.value = result.errors;
+  }
+}
+</script>
+
 <template>
   <div class="bg-white px-6 lg:px-8">
     <div class="mx-auto max-w-2xl text-center">
@@ -13,7 +45,26 @@
         </p>
       </div>
     </div>
-    <form action="#" method="POST" class="mx-auto max-w-xl pb-24">
+    <div v-if="messageSuccess" class="pb-12">
+      <div
+        class="bg-green-50 mx-auto text-center border max-w-xl border-green-400 text-green-700 px-4 py-3 rounded-md flex items-center justify-center text-lg"
+      >
+        <svg
+          class="fill-current w-6 h-6 mr-2"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+        >
+          <path d="M10 15l-3.5-3.5 1.41-1.41L10 12.17l4.59-4.59L16 9l-6 6z" />
+        </svg>
+        <span>{{ messageSuccess }}</span>
+      </div>
+    </div>
+
+    <form
+      @submit.prevent="submit"
+      class="space-y-4 max-w-lg mx-auto bg-white pb-24"
+      v-if="!messageSuccess"
+    >
       <div class="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
         <div>
           <label
@@ -24,12 +75,14 @@
           <div class="mt-2.5">
             <input
               type="text"
-              name="first-name"
-              id="first-name"
-              autocomplete="given-name"
+              id="first_name"
               class="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-yellow-300 sm:text-sm/6"
+              v-model="data.first_name"
             />
           </div>
+          <p class="text-sm text-red-600">
+            {{ errors && errors.first_name ? errors.first_name[0] : "" }}
+          </p>
         </div>
         <div>
           <label
@@ -40,12 +93,14 @@
           <div class="mt-2.5">
             <input
               type="text"
-              name="last-name"
-              id="last-name"
-              autocomplete="family-name"
+              id="last_name"
               class="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-yellow-300 sm:text-sm/6"
+              v-model="data.last_name"
             />
           </div>
+          <p class="text-sm text-red-600">
+            {{ errors && errors.last_name ? errors.last_name[0] : "" }}
+          </p>
         </div>
         <div class="sm:col-span-2">
           <label for="email" class="block text-sm/6 font-semibold text-gray-900"
@@ -54,12 +109,14 @@
           <div class="mt-2.5">
             <input
               type="email"
-              name="email"
               id="email"
-              autocomplete="email"
               class="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-yellow-300 sm:text-sm/6"
+              v-model="data.email"
             />
           </div>
+          <p class="text-sm text-red-600">
+            {{ errors && errors.email ? errors.email[0] : "" }}
+          </p>
         </div>
         <div class="sm:col-span-2">
           <label
@@ -69,40 +126,16 @@
           >
           <div class="mt-2.5">
             <textarea
-              name="message"
               id="message"
               rows="4"
               class="block w-full rounded-md bg-white px-3.5 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline--yellow-300"
+              v-model="data.message"
             />
           </div>
+          <p class="text-sm text-red-600">
+            {{ errors && errors.message ? errors.message[0] : "" }}
+          </p>
         </div>
-        <SwitchGroup as="div" class="flex gap-x-4 sm:col-span-2">
-          <div class="flex h-6 items-center">
-            <Switch
-              v-model="agreed"
-              :class="[
-                agreed ? 'bg-yellow-300' : 'bg-gray-200',
-                'flex w-8 flex-none cursor-pointer rounded-full p-px ring-1 ring-gray-900/5 transition-colors duration-200 ease-in-out ring-inset focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline--yellow-300',
-              ]"
-            >
-              <span class="sr-only">Agree to policies</span>
-              <span
-                aria-hidden="true"
-                :class="[
-                  agreed ? 'translate-x-3.5' : 'translate-x-0',
-                  'size-4 transform rounded-full bg-white shadow-xs ring-1 ring-gray-900/5 transition duration-200 ease-in-out',
-                ]"
-              />
-            </Switch>
-          </div>
-          <SwitchLabel class="text-sm/6 text-gray-600">
-            By selecting this, you agree to our
-            {{ " " }}
-            <a href="#" class="font-semibold text-yellow-400"
-              >privacy&nbsp;policy</a
-            >.
-          </SwitchLabel>
-        </SwitchGroup>
       </div>
       <div class="mt-10">
         <button
@@ -115,10 +148,3 @@
     </form>
   </div>
 </template>
-
-<script setup>
-import { ref } from "vue";
-import { Switch, SwitchGroup, SwitchLabel } from "@headlessui/vue";
-
-const agreed = ref(false);
-</script>

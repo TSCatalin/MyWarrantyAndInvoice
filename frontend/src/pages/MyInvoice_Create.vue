@@ -1,7 +1,9 @@
 <script setup>
 import { ref } from "vue";
-import axiosClient from "../axios";
 import router from "../router";
+import { useInvoiceStore } from "../store/invoiceStore";
+
+const invoiceStore = useInvoiceStore();
 
 const data = ref({
   invoice_number: "",
@@ -25,37 +27,16 @@ const errors = ref({
   invoice_file: null,
 });
 
-function submit() {
-  if (typeof data.value.value === "string" && data.value.value.includes(",")) {
-    data.value.value = data.value.value.replace(",", ".");
-  }
-  const formData = new FormData();
-  formData.append("invoice_number", data.value.invoice_number);
-  formData.append("products_name", data.value.products_name);
-  formData.append("seller", data.value.seller);
-  formData.append("value", data.value.value);
-  formData.append("currency", data.value.currency);
-  formData.append("customer_name", data.value.customer_name);
-  formData.append("date_purchase", data.value.date_purchase);
+async function submit() {
+  errors.value = {};
 
-  if (data.value.invoice_file) {
-    formData.append("invoice_file", data.value.invoice_file);
+  const result = await invoiceStore.createInvoice(data.value);
+
+  if (result.success) {
+    router.push({ name: "MyInvoice" });
   } else {
-    console.log("No file was selected.");
+    errors.value = result.errors;
   }
-
-  axiosClient
-    .post("api/invoice", formData)
-    .then((response) => {
-      router.push({ name: "MyInvoice" });
-    })
-    .catch((error) => {
-      if (error.response) {
-        errors.value = error.response.data.errors;
-      } else {
-        console.log("Error without response:", error);
-      }
-    });
 }
 
 function formatDate(date) {

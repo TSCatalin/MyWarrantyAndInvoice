@@ -1,12 +1,14 @@
 <script setup>
-import axiosClient from "../axios";
 import router from "../router";
 import { onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
+import { useInvoiceStore } from "../store/invoiceStore";
 
 const route = useRoute();
 const invoiceId = route.params.id;
 const loading = ref(true);
+
+const invoiceStore = useInvoiceStore();
 
 const data = ref({
   invoice_number: "",
@@ -30,58 +32,32 @@ const errors = ref({
   invoice_file: [],
 });
 
-function submit() {
-  let formData = new FormData();
-  if (typeof data.value.value === "string" && data.value.value.includes(",")) {
-    data.value.value = data.value.value.replace(",", ".");
-  }
-  formData.append("invoice_number", data.value.invoice_number);
-  formData.append("products_name", data.value.products_name);
-  formData.append("seller", data.value.seller);
-  formData.append("value", data.value.value);
-  formData.append("currency", data.value.currency);
-  formData.append("customer_name", data.value.customer_name);
-  formData.append("date_purchase", data.value.date_purchase);
+async function submit() {
+  errors.value = {};
+  const result = await invoiceStore.updateInvoice(invoiceId, data.value);
 
-  if (data.value.invoice_file) {
-    formData.append("invoice_file", data.value.invoice_file);
+  if (result.success) {
+    router.push({ name: "MyInvoice" });
   } else {
-    console.log("No file was selected.");
+    errors.value = result.errors;
   }
-  formData.append("_method", "PUT");
-
-  axiosClient
-    .post(`/api/invoice/${invoiceId}`, formData)
-    .then((response) => {
-      router.push({ name: "MyInvoice" });
-    })
-    .catch((error) => {
-      if (error.response) {
-        errors.value = error.response.data.errors;
-      } else {
-        console.log("Error without response:", error);
-      }
-    });
 }
 
-onMounted(() => {
-  axiosClient
-    .get(`/api/invoice/${invoiceId}`)
-    .then((response) => {
-      data.value = response.data.data;
-      data.value.invoice_file = null;
-      loading.value = false;
-    })
-    .catch((error) => {
-      console.error("Error retrieving the warranty:", error.response);
-      if (error.response && error.response.status === 500) {
-        console.error("Server error:", error.response.data);
-      }
-      if (error.response && error.response.status === 404) {
-        router.push("/not-found");
-      }
-      loading.value = false;
-    });
+onMounted(async () => {
+  const result = await invoiceStore.fetchInvoice(invoiceId);
+
+  if (result.notFound) {
+    router.push("/not-found");
+  }
+
+  if (result.serverError) {
+    loading.value = false;
+  }
+
+  data.value = invoiceStore.invoice || {};
+  data.value.invoice_file = null;
+
+  loading.value = false;
 });
 
 function formatDate(date) {

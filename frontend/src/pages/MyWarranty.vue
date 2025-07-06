@@ -1,33 +1,14 @@
 <script setup>
-import axiosClient from "../axios";
-import { onMounted, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import router from "../router";
 import { useRoute } from "vue-router";
 import { TailwindPagination } from "laravel-vue-pagination";
+import { useWarrantyStore } from "../store/warrantyStore";
+
+const warrantyStore = useWarrantyStore();
 
 const sellers = ref([]);
 const status = ref([]);
-const warranty = ref([]);
-
-const pagination = ref({
-  current_page: 1,
-  last_page: 1,
-});
-
-const route = useRoute();
-
-function deleteImage(id) {
-  if (!confirm("Are you sure you want to delete this Warranty?")) {
-    return;
-  }
-  console.log(id);
-  axiosClient.delete(`/api/warranty/${id}`).then((response) => {
-    location.reload();
-  });
-}
-
-const loading = ref(true);
-const loadingWarranties = ref(false);
 
 const showFilters = ref(false);
 
@@ -38,72 +19,66 @@ const filters = ref({
   sortBy: "",
 });
 
-onMounted(() => {
-  fetchWarrantyData();
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
 });
+
+const route = useRoute();
+
+
+const deleteWarranty = async (id) => {
+  await warrantyStore.deleteWarranty(id);
+};
 
 const toggleFilterVisibility = () => {
   showFilters.value = !showFilters.value;
 };
 
-const fetchWarrantyData = (page = 1) => {
-  let params = {
-    seller: filters.value.seller,
-    status: filters.value.status,
-    product_name: filters.value.product_name,
-    sortBy: filters.value.sortBy,
-    page: page,
+const fetchWarrantyData = async (page = 1) => {
+  await warrantyStore.fetchAll(filters.value, page);
+
+  sellers.value = warrantyStore.sellers || [];
+  status.value = warrantyStore.status || [];
+  pagination.value.current_page = warrantyStore.pagination.current_page;
+  pagination.value.last_page = warrantyStore.pagination.last_page;
+};
+
+const resetFilters = () => {
+  filters.value = {
+    seller: "",
+    status: "",
+    product_name: "",
+    sortBy: "",
   };
 
   router.push({
     name: "MyWarranty",
-    query: { ...params, page: page },
+    query: {
+      page: 1,
+    },
   });
-  console.log("DIN ON FETCH WARRANTY");
-
-  axiosClient
-    .get("/api/warranty", { params })
-    .then((response) => {
-      warranty.value = response.data;
-      sellers.value = response.data.seller;
-      status.value = response.data.status;
-      pagination.value.current_page = response.data.meta.current_page;
-      pagination.value.last_page = response.data.meta.last_page;
-
-      if (warranty.value.data.length === 0) {
-        loadingWarranties.value = false;
-      } else {
-        loadingWarranties.value = true;
-      }
-
-      loading.value = false;
-    })
-    .catch((error) => {
-      console.error("Error fetching warranty data:", error);
-      loading.value = false;
-    });
 };
 
-const resetFilters = () => {
-  filters.value.seller = "";
-  filters.value.status = "";
-  filters.value.product_name = "";
-  filters.value.sortBy = "";
-  router.push({
-    name: "MyWarranty",
-    query: {},
-  });
-  fetchWarrantyData();
+const applyFilters = () => {
+  router.push({ name: "MyWarranty", query: { ...filters.value, page: 1 } });
 };
 
 watch(
   () => route.query,
   (newQuery) => {
-    filters.value.seller = newQuery.seller || "";
-    filters.value.status = newQuery.status || "";
-    filters.value.product_name = newQuery.product_name || "";
-    filters.value.sortBy = newQuery.sortBy || "";
-    fetchWarrantyData();
+    const {
+      seller = "",
+      status = "",
+      product_name = "",
+      sortBy = "",
+      page = "1",
+    } = newQuery;
+
+    filters.value = { seller, status, product_name, sortBy };
+    const pageNumber = isNaN(parseInt(page)) ? 1 : parseInt(page);
+
+    fetchWarrantyData(pageNumber);
   },
   { immediate: true }
 );
@@ -111,7 +86,6 @@ watch(
 const truncateProductName = (name) => {
   return name.length > 11 ? name.substring(0, 11) + "..." : name;
 };
-
 </script>
 
 <template>
@@ -144,7 +118,7 @@ const truncateProductName = (name) => {
   </header>
   <main>
     <div
-      v-if="loadingWarranties || sellers.length > 1"
+      v-if="warrantyStore.loadingWarranties || sellers.length > 1"
       class="max-w-7xl mx-auto"
     >
       <div class="bg-white shadow-lg pl-4 sm:pl-12 pr-12 pb-2 pt-2">
@@ -192,7 +166,7 @@ const truncateProductName = (name) => {
                   <select
                     v-model="filters.seller"
                     id="seller"
-                    @change="fetchWarrantyData"
+                    @change="applyFilters"
                     class="w-full p-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-200 bg-white text-black"
                   >
                     <option value="" class="text-gray-300">
@@ -213,7 +187,7 @@ const truncateProductName = (name) => {
                   <select
                     v-model="filters.status"
                     id="status"
-                    @change="fetchWarrantyData"
+                    @change="applyFilters"
                     class="w-full p-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-200 bg-white text-black"
                   >
                     <option value="" class="text-gray-300">
@@ -234,7 +208,7 @@ const truncateProductName = (name) => {
                   <select
                     v-model="filters.sortBy"
                     id="sortBy"
-                    @change="fetchWarrantyData"
+                    @change="applyFilters"
                     class="w-full p-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-200 bg-white text-black"
                   >
                     <option value="" class="text-gray-300">Sort by</option>
@@ -308,7 +282,7 @@ const truncateProductName = (name) => {
                       class="block w-full pl-10 pr-4 py-4 text-sm bg-white text-black placeholder:text-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-200"
                       placeholder="Search Product"
                       v-model="filters.product_name"
-                      @keydown.enter="fetchWarrantyData"
+                      @keydown.enter="applyFilters"
                     />
                   </div>
                 </div>
@@ -329,7 +303,7 @@ const truncateProductName = (name) => {
       </div>
     </div>
 
-    <div v-if="loading" class="px-5 py-4 flex justify-center">
+    <div v-if="warrantyStore.loading" class="px-5 py-4 flex justify-center">
       <button
         disabled
         type="button"
@@ -358,11 +332,11 @@ const truncateProductName = (name) => {
     </div>
     <div v-else class="px-4 py-6 sm:px-24 md:px-6 lg:px-10">
       <div
-        v-if="loadingWarranties"
+        v-if="warrantyStore.loadingWarranties"
         class="grid grid-cols-1 md:grid-cols-2 gap-8 p-4"
       >
         <div
-          v-for="warra in warranty.data"
+          v-for="warra in warrantyStore.warranty.data"
           :key="warra.id"
           class="bg-white shadow-lg rounded-lg border-2 border-neutral-200 hover:border-yellow-400 transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
         >
@@ -389,6 +363,7 @@ const truncateProductName = (name) => {
                 {{ warra.date_purchase }}
               </div>
             </h3>
+
             <div class="text-gray-700 mt-2 flex items-center">
               <span
                 v-if="warra.status"
@@ -405,6 +380,7 @@ const truncateProductName = (name) => {
                 Unavailable
               </span>
             </div>
+
             <div class="text-sm text-gray-700 mb-2 mt-4">
               <div class="flex items-center mb-2">
                 <svg
@@ -438,6 +414,7 @@ const truncateProductName = (name) => {
                 {{ warra.warranty_end_date }}
               </div>
             </div>
+
             <hr class="my-2 border-t-2 border-gray-200" />
             <div class="text-base font-medium text-gray-800">More details</div>
 
@@ -473,7 +450,7 @@ const truncateProductName = (name) => {
 
               <button
                 type="button"
-                @click="deleteImage(warra.id)"
+                @click="deleteWarranty(warra.id)"
                 class="px-4 py-2 ml-3 text-base rounded-lg font-medium text-gray-900 bg-white border border-neutral-300 focus:outline-none hover:border-amber-300 hover:bg-yellow-300 hover:shadow-md transition-all duration-200 ease-in-out w-full sm:w-auto"
               >
                 Delete
@@ -502,7 +479,7 @@ const truncateProductName = (name) => {
       </div>
       <div class="text-center py-2">
         <TailwindPagination
-          :data="warranty"
+          :data="warrantyStore.warranty"
           @pagination-change-page="fetchWarrantyData"
         />
       </div>

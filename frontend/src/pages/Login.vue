@@ -1,8 +1,12 @@
 <script setup>
-import axiosClient from "../axios";
 import { ref, onMounted } from "vue";
 import router from "../router";
 import LoginImage from "../components/loginImage.vue";
+import { useAuthStore } from "../store/authStore";
+import useUserStore from "../store/user";
+
+const authStore = useAuthStore();
+const userStore = useUserStore();
 
 const data = ref({
   email: "",
@@ -11,46 +15,37 @@ const data = ref({
 
 const errorMessage = ref("");
 
-function submit() {
-  axiosClient.get("/sanctum/csrf-cookie").then((response) => {
-    axiosClient
-      .post("/login", data.value)
-      .then((response) => {
-        axiosClient
-          .get("/api/warranty/updateStatusWarranty")
-          .then((response) => {
-            console.log(response.data);
-          })
-          .catch((error) => {
-            console.error("Error", error);
-          });
-        router.push({ name: "Home" });
-      })
-      .catch((error) => {
-        console.log(error.response);
-        errorMessage.value = error.response.data.message;
-      });
-  });
-}
+const submit = async () => {
+  const result = await authStore.loginUser(data.value);
 
-onMounted(() => {
-  axiosClient.get("/api/user")
-    .then(response => {
-      router.push({ name: 'Home' });
-    })
-    .catch(error => {
-      console.log("The user is not authenticated:", error);
-    });
+  if (result.success) {
+    const userResult = await userStore.fetchUser();
+
+    if (userResult.verified) {
+      router.push({ name: "Home" });
+    } else {
+      router.push({ name: "EmailVerificationNotice" });
+    }
+  } else {
+    errorMessage.value = result.message;
+  }
+};
+
+onMounted(async () => {
+  const result = await userStore.fetchUser();
+  if (result.success) {
+    router.push({ name: "Home" });
+  }
 });
-
 </script>
 
 <template>
   <div>
     <div class="flex flex-row min-h-screen">
-    <div class="hidden md:flex w-9/12 bg-white items-center justify-center">
-      <LoginImage/>
-      <div></div></div>
+      <div class="hidden md:flex w-9/12 bg-white items-center justify-center">
+        <LoginImage />
+        <div></div>
+      </div>
       <div
         class="w-full flex flex-col justify-center items-center pt-6 sm:pt-0 bg-white px-8"
       >
@@ -67,7 +62,7 @@ onMounted(() => {
           {{ errorMessage }}
         </div>
 
-        <div class="mt-4 sm:mx-auto sm:w-full sm:max-w-sm">
+        <div class="mt-4 w-full max-w-sm">
           <form @submit.prevent="submit" class="space-y-4">
             <div>
               <label
@@ -122,6 +117,13 @@ onMounted(() => {
                   </svg>
                   Password
                 </label>
+                <div class="text-sm">
+                  <RouterLink
+                    :to="{ name: 'ForgotPassword' }"
+                    class="font-semibold text-yellow-400 hover:text-yellow-300"
+                    >Forgot password?</RouterLink
+                  >
+                </div>
               </div>
               <div class="mt-2">
                 <input

@@ -1,7 +1,12 @@
 <script setup>
-import { ref } from "vue";
-import axiosClient from "../axios";
+import { onMounted, ref } from "vue";
 import router from "../router";
+import { useWarrantyStore } from "../store/warrantyStore";
+import { useInvoiceStore } from "../store/invoiceStore";
+
+
+const warrantyStore = useWarrantyStore();
+const invoiceStore = useInvoiceStore();
 
 const data = ref({
   warranty_id: "",
@@ -25,34 +30,16 @@ const errors = ref({
   warranty_file: [],
 });
 
-function submit() {
-  const formData = new FormData();
-  formData.append("warranty_id", data.value.warranty_id);
-  formData.append("invoice_number", data.value.invoice_number);
-  formData.append("product_name", data.value.product_name);
-  formData.append("seller", data.value.seller);
-  formData.append("customer_name", data.value.customer_name);
-  formData.append("date_purchase", data.value.date_purchase);
-  formData.append("warranty_end_date", data.value.warranty_end_date);
+async function submit() {
+  errors.value = {};
 
-  if (data.value.warranty_file) {
-    formData.append("warranty_file", data.value.warranty_file);
+  const result = await warrantyStore.createWarranty(data.value);
+
+  if (result.success) {
+    router.push({ name: "MyWarranty" });
   } else {
-    console.log("No file was selected.");
+    errors.value = result.errors;
   }
-
-  axiosClient
-    .post("api/warranty", formData)
-    .then((response) => {
-      router.push({ name: "MyWarranty" });
-    })
-    .catch((error) => {
-      if (error.response) {
-        errors.value = error.response.data.errors;
-      } else {
-        console.log("Error without response:", error);
-      }
-    });
 }
 
 function formatDate(date) {
@@ -62,27 +49,15 @@ function formatDate(date) {
   return `${year}-${month}-${day}`;
 }
 
-const invoiceNumber = ref("");
 const isCheckboxChecked = ref(false);
-
 const valueInvoiceNumber = ref();
 
-const getInvoiceNumber = () => {
-  axiosClient
-    .get("/api/invoice/get-invoice-numbers")
-    .then((response) => {
-      valueInvoiceNumber.value = response.data.data;
-    })
-    .catch((error) => {
-      console.error("Error fetching getInvoiceNumber data:", error);
-    });
-};
+onMounted(async () => {
+  valueInvoiceNumber.value = null;
+  const numbers = await invoiceStore.getInvoiceNumber();
+  valueInvoiceNumber.value = numbers;
+});
 
-const handleCheckboxChange = () => {
-  if (isCheckboxChecked.value) {
-    getInvoiceNumber();
-  }
-};
 </script>
 
 <template>
@@ -181,13 +156,12 @@ const handleCheckboxChange = () => {
             </option>
           </select>
 
-          <div class="flex items-center mt-1">
+          <div v-if="valueInvoiceNumber" class="flex items-center mt-1">
             <input
               type="checkbox"
               id="getInvoiceNumberCheckbox"
               v-model="isCheckboxChecked"
               class="w-5 h-5 text-yellow-500 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all duration-200 ease-in-out"
-              @change="handleCheckboxChange"
             />
             <label
               for="getInvoiceNumberCheckbox"

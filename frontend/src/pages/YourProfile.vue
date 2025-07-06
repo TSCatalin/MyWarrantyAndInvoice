@@ -1,8 +1,9 @@
 <script setup>
 import { onMounted, ref, computed } from "vue";
 import useUserStore from "../store/user";
-import axiosClient from "../axios";
 import router from "../router";
+
+const errors = computed(() => userStore.errors);
 
 const data_info = ref({
   name: "",
@@ -19,92 +20,32 @@ const data_destroy = ref({
   password: "",
 });
 
-const errors_info = ref({
-  name: [],
-  email: [],
-});
-
-const errors_password = ref({
-  current_password: [],
-  password: [],
-  password_confirmation: [],
-});
-
-const errors_destroy = ref({
-  password: [],
-});
-
 const userStore = useUserStore();
 
 const user = computed(() => userStore.user);
 
-function submit_info() {
-  const formData = new FormData();
-  formData.append("name", data_info.value.name);
-  formData.append("email", data_info.value.email);
-  formData.append("_method", "PUT");
-
-  axiosClient
-    .post("profile", formData)
-    .then(() => {
-      router.push({ name: "Home" });
-    })
-    .catch((error) => {
-      if (error.response) {
-        errors_info.value = error.response.data.errors;
-      } else {
-        console.log("Error without response:", error);
-      }
-    });
+async function submit_info() {
+  errors.value = {};
+  const result = await userStore.updateProfile(data_info.value);
+  if (result.success) {
+    router.push({ name: "Home" });
+  } else {
+    errors.value = result.errors;
+  }
 }
 
-function submit_password() {
-  const formData = new FormData();
-  formData.append("current_password", data_password.value.current_password);
-  formData.append("password", data_password.value.password);
-  formData.append(
-    "password_confirmation",
-    data_password.value.password_confirmation
-  );
-  formData.append("_method", "PUT");
-
-  axiosClient
-    .post("password", formData)
-    .then(() => {
-      router.push({ name: "Home" });
-    })
-    .catch((error) => {
-      if (error.response) {
-        errors_password.value = error.response.data.errors;
-      } else {
-        console.log("Error without response:", error);
-      }
-    });
+async function submit_password() {
+  errors.value = {};
+  const result = await userStore.updatePassword(data_password.value);
+  if (result.success) {
+    router.push({ name: "Home" });
+  } else {
+    errors.value = result.errors;
+  }
 }
 
 function submit_delete() {
-  if (!confirm("Are you sure you want to delete your account?")) {
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("password", data_destroy.value.password);
-  axiosClient
-    .post("profile", formData)
-    .then((response) => {
-      if (response.data.redirect_to_login) {
-        router.push({ name: "Login" });
-      } else {
-        alert(response.data.message);
-      }
-    })
-    .catch((error) => {
-      if (error.response) {
-        errors_destroy.value = error.response.data.errors;
-      } else {
-        console.log("Error without response:", error);
-      }
-    });
+  userStore.deleteAccount(data_destroy.value.password);
 }
 
 onMounted(() => {
@@ -137,7 +78,7 @@ onMounted(() => {
             v-model="data_info.name"
           />
           <p class="text-sm text-red-600">
-            {{ errors_info && errors_info.name ? errors_info.name[0] : "" }}
+            {{ errors && errors.name ? errors.name[0] : "" }}
           </p>
         </div>
 
@@ -152,7 +93,7 @@ onMounted(() => {
             v-model="data_info.email"
           />
           <p class="text-sm text-red-600">
-            {{ errors_info && errors_info.email ? errors_info.email[0] : "" }}
+            {{ errors && errors.email ? errors.email[0] : "" }}
           </p>
         </div>
 
@@ -195,8 +136,8 @@ onMounted(() => {
           />
           <p class="text-sm text-red-600">
             {{
-              errors_password && errors_password.current_password
-                ? errors_password.current_password[0]
+              errors && errors.current_password
+                ? errors.current_password[0]
                 : ""
             }}
           </p>
@@ -213,11 +154,7 @@ onMounted(() => {
             v-model="data_password.password"
           />
           <p class="text-sm text-red-600">
-            {{
-              errors_password && errors_password.password
-                ? errors_password.password[0]
-                : ""
-            }}
+            {{ errors && errors.password ? errors.password[0] : "" }}
           </p>
         </div>
 
@@ -233,8 +170,8 @@ onMounted(() => {
           />
           <p class="text-sm text-red-600">
             {{
-              errors_password && errors_password.password_confirmation
-                ? errors_password.password_confirmation[0]
+              errors && errors.password_confirmation
+                ? errors.password_confirmation[0]
                 : ""
             }}
           </p>
@@ -286,11 +223,7 @@ onMounted(() => {
             v-model="data_destroy.password"
           />
           <p class="text-sm text-red-600">
-            {{
-              errors_destroy && errors_destroy.password
-                ? errors_destroy.password[0]
-                : ""
-            }}
+            {{ errors && errors.password ? errors.password[0] : "" }}
           </p>
         </div>
 

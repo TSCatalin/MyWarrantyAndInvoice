@@ -1,66 +1,38 @@
 <script setup>
-import axiosClient from "../axios";
 import { onMounted, ref } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { RouterLink, useRoute} from "vue-router";
 import router from "../router";
+import { useInvoiceStore } from "../store/invoiceStore";
 
 const invoice = ref({});
 const warranties = ref({});
 const loading = ref(true);
-const loadingWarranties = ref(false);
-
 
 const route = useRoute();
 const invoiceId = route.params.id;
 
-onMounted(() => {
-  let params = {
-    invoice_number: "",
-  };
+const invoiceStore = useInvoiceStore();
 
-  axiosClient
-    .get(`/api/invoice/${invoiceId}`)
-    .then((response) => {
-      invoice.value = response.data.data;
-      params.invoice_number = response.data.data.invoice_number;
+onMounted(async () => {
+  const result = await invoiceStore.fetchWarrantiesForInvoice(invoiceId);
 
-      axiosClient
-        .get("/api/warranty/get-warrantyforinvoice", { params })
-        .then((response) => {
-          warranties.value = response.data;
-          loading.value = false;
-          if (warranties.value.data.length === 0) {
-            loadingWarranties.value = false;
-          } else {
-            loadingWarranties.value = true;
-          }
-        })
-        .catch((error) => {
-          loading = false
-          console.error("Error retrieving the warranty:", error.response);
-          if (error.response && error.response.status === 500) {
-            console.error("Server error:", error.response.data);
-          }
-          if (error.response && error.response.status === 404) {
-            router.push("/not-found");
-          }
-        });
-    })
-    .catch((error) => {
-      console.error("Error retrieving invoices:", error.response);
-      if (error.response && error.response.status === 500) {
-        console.error("Server error:", error.response.data);
-      }
-      if (error.response && error.response.status === 404) {
-        router.push("/not-found");
-      }
-    });
+  if (result?.error?.response?.status === 404) {
+    router.push("/not-found");
+  }
+
+  if (result?.error?.response?.status === 500) {
+    loading.value = false;
+  }
+  invoice.value = invoiceStore.invoice || {};
+  warranties.value = invoiceStore.warranties || {};
+  loading.value = false;
 });
 
 const isImage = (file) => {
   if (file.startsWith("data:")) {
     return file.includes("image/");
   }
+
   if (file.startsWith("iVBORw0KGgoAAA")) {
     return true;
   } else if (file.startsWith("/9j/4AAQ")) {
@@ -73,9 +45,11 @@ const isPDF = (file) => {
   if (file.startsWith("data:application/pdf")) {
     return true;
   }
+
   if (file.startsWith("JVBERi0xL")) {
     return true;
   }
+
   return false;
 };
 
@@ -88,9 +62,11 @@ const isWord = (file) => {
   ) {
     return true;
   }
+
   if (file.startsWith("D0CF11E0A1B11AE1")) {
     return true;
   }
+
   if (file.startsWith("UEsDBB")) {
     return true;
   }
@@ -101,19 +77,21 @@ const getImageSrc = (file) => {
   if (file.startsWith("data:image/")) {
     return file;
   }
+
   if (file.startsWith("iVBORw0KGgoAAA")) {
     return "data:image/png;base64," + file;
   } else if (file.startsWith("/9j/4AAQ")) {
     return "data:image/jpeg;base64," + file;
   }
+
   return "data:image/png;base64," + file;
 };
 
 const getPDFSrc = (file) => {
-  console.log("TEST PDF");
   if (file.startsWith("JVBERi0xL")) {
     return "data:application/pdf;base64," + file;
   }
+
   if (file.startsWith("data:application/pdf;base64,")) {
     return file;
   }
@@ -130,15 +108,18 @@ const getWordSrc = (file) => {
   ) {
     return file;
   }
+
   if (file.startsWith("D0CF11E0A1B11AE1")) {
     return "data:application/msword;base64," + file;
   }
+
   if (file.startsWith("UEsDBB")) {
     return (
       "data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64," +
       file
     );
   }
+
   return "data:application/msword;base64," + file;
 };
 
@@ -370,7 +351,7 @@ const truncateProductName = (name) => {
                 >Download the image</a
               >
             </div>
-            
+
             <div v-else-if="isPDF(invoice.invoice_file)">
               <iframe
                 :src="getPDFSrc(invoice.invoice_file)"
@@ -400,7 +381,10 @@ const truncateProductName = (name) => {
         </div>
       </div>
       <div class="py-4" />
-      <div v-if="loadingWarranties" class="shadow rounded-lg border border-orange-100 bg-white py-2">
+      <div
+        v-if="warranties && warranties.data && warranties.data.length > 0"
+        class="shadow rounded-lg border border-orange-100 bg-white py-2"
+      >
         <div class="bg-white rounded-lg mt-4">
           <div class="p-4 ml-2">
             <h2 class="text-base font-semibold text-black">

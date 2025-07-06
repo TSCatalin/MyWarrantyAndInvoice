@@ -5,7 +5,6 @@ import {
   DisclosurePanel,
   Menu,
   MenuButton,
-  MenuItem,
   MenuItems,
 } from "@headlessui/vue";
 import { Bars3Icon, XMarkIcon } from "@heroicons/vue/24/outline";
@@ -48,7 +47,6 @@ const isInDropdown = computed(() =>
               <LogoImage class="mr-2"/>
               MY Warranty and Invoice
             </div>
-
             <div class="hidden md:block">
               <div class="flex items-baseline space-x-4">
                 <RouterLink

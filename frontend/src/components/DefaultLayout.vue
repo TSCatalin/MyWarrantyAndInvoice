@@ -1,3 +1,87 @@
+<script setup>
+import {
+  Disclosure,
+  DisclosureButton,
+  DisclosurePanel,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+} from "@headlessui/vue";
+import { Bars3Icon, XMarkIcon } from "@heroicons/vue/24/outline";
+import { RouterLink } from "vue-router";
+import useUserStore from "../store/user";
+import { onMounted, computed } from "vue";
+import router from "../router";
+
+const userStore = useUserStore();
+
+const user = computed(() => userStore.user);
+
+const navigation = [
+  {
+    name: "Dashboard",
+    to: { name: "Home" },
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"><path fill="currentColor" d="M13 9V3h8v6zM3 13V3h8v10zm10 8V11h8v10zM3 21v-6h8v6zm2-10h4V5H5zm10 8h4v-6h-4zm0-12h4V5h-4zM5 19h4v-2H5zm4-2"/></svg>`,
+  },
+  {
+    name: "Notifications",
+    to: { name: "Notifications" },
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"><path fill="currentColor" d="M4 19v-2h2v-7q0-2.075 1.25-3.687T10.5 4.2v-.7q0-.625.438-1.062T12 2t1.063.438T13.5 3.5v.7q2 .5 3.25 2.113T18 10v7h2v2zm8 3q-.825 0-1.412-.587T10 20h4q0 .825-.587 1.413T12 22m-4-5h8v-7q0-1.65-1.175-2.825T12 6T9.175 7.175T8 10z"/></svg>`,
+  },
+  {
+    name: "History",
+    to: { name: "History" },
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21q-3.15 0-5.575-1.912T3.275 14.2q-.1-.375.15-.687t.675-.363q.4-.05.725.15t.45.6q.6 2.25 2.475 3.675T12 19q2.925 0 4.963-2.037T19 12t-2.037-4.962T12 5q-1.725 0-3.225.8T6.25 8H8q.425 0 .713.288T9 9t-.288.713T8 10H4q-.425 0-.712-.288T3 9V5q0-.425.288-.712T4 4t.713.288T5 5v1.35q1.275-1.6 3.113-2.475T12 3q1.875 0 3.513.713t2.85 1.924t1.925 2.85T21 12t-.712 3.513t-1.925 2.85t-2.85 1.925T12 21m1-9.4l2.5 2.5q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-2.8-2.8q-.15-.15-.225-.337T11 11.975V8q0-.425.288-.712T12 7t.713.288T13 8z"/></svg>`,
+  },
+  {
+    name: "Warranty",
+    to: { name: "MyWarranty" },
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="4"><rect width="36" height="36" x="6" y="6" rx="3"/><path stroke-linecap="round" d="M6 17h36M17 42V17"/></g></svg>`,
+  },
+  {
+    name: "Invoice",
+    to: { name: "MyInvoice" },
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M340-460h280v-64H340v64Zm0 120h280v-64H340v64Zm0 120h174v-64H340v64ZM263.72-96Q234-96 213-117.15T192-168v-624q0-29.7 21.15-50.85Q234.3-864 264-864h312l192 192v504q0 29.7-21.16 50.85Q725.68-96 695.96-96H263.72ZM528-624v-168H264v624h432v-456H528ZM264-792v168-168 624-624Z"/></svg>`,
+  },
+];
+const userNavigation = [
+  {
+    name: "Your Profile",
+    to: { name: "YourProfile" },
+    icon: `<svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="24px"
+                  viewBox="0 -960 960 960"
+                  width="24px"
+                  fill="#000000"
+                >
+                  <path
+                    d="M480-480q-60 0-102-42t-42-102q0-60 42-102t102-42q60 0 102 42t42 102q0 60-42 102t-102 42ZM192-192v-96q0-23 12.5-43.5T239-366q55-32 116.29-49 61.29-17 124.5-17t124.71 17Q666-398 721-366q22 13 34.5 34t12.5 44v96H192Zm72-72h432v-24q0-5.18-3.03-9.41-3.02-4.24-7.97-6.59-46-28-98-42t-107-14q-55 0-107 14t-98 42q-5 4-8 7.72-3 3.73-3 8.28v24Zm216.21-288Q510-552 531-573.21t21-51Q552-654 530.79-675t-51-21Q450-696 429-674.79t-21 51Q408-594 429.21-573t51 21Zm-.21-72Zm0 360Z"
+                  />
+                </svg>`,
+  },
+];
+
+async function logout() {
+  const result = await userStore.logoutUser();
+
+  if (result.success) {
+    router.push({ name: "HomeGuest" });
+  }
+}
+
+import { useNotificationStore } from "../store/notificationStore";
+
+const notificationStore = useNotificationStore();
+
+const notificationCount = computed(() => notificationStore.unreadCount);
+
+onMounted(() => {
+  notificationStore.fetchUnreadCount();
+});
+</script>
+
 <template>
   <div
     class="bg-white hidden lg:block border-b-2 border-neutral-300 sticky top-0 z-30"
@@ -89,9 +173,18 @@
           ]"
           :aria-current="$route.name === item.to.name ? 'page' : undefined"
         >
-          <div class="flex">
+          <div class="flex items-center">
             <span v-html="item.icon" class="mr-2"></span>
             {{ item.name }}
+            <span
+              v-if="item.name === 'Notifications' && notificationCount > 0"
+              :class="[
+                'inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium rounded-full text-black',
+                $route.name === item.to.name ? 'bg-white' : 'bg-yellow-300',
+              ]"
+            >
+              {{ notificationCount }}
+            </span>
           </div>
         </RouterLink>
       </div>
@@ -184,12 +277,23 @@
               <div class="flex">
                 <span v-html="item.icon" class="mr-2"></span>
                 {{ item.name }}
+                <span
+                  v-if="item.name === 'Notifications' && notificationCount > 0"
+                  :class="[
+                    'inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium rounded-full text-black',
+                    $route.name === item.to.name ? 'bg-white' : 'bg-yellow-300',
+                  ]"
+                >
+                  {{ notificationCount }}
+                </span>
               </div>
             </RouterLink>
           </div>
 
           <div class="">
-            <div class="flex flex-col items-center space-y-2 px-4 py-4 pt-2 pb-3 sm:px-3">
+            <div
+              class="flex flex-col items-center space-y-2 px-4 py-4 pt-2 pb-3 sm:px-3"
+            >
               <RouterLink
                 v-for="item in userNavigation"
                 :key="item.name"
@@ -243,72 +347,4 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import {
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-} from "@headlessui/vue";
-import { Bars3Icon, XMarkIcon } from "@heroicons/vue/24/outline";
-import { RouterLink } from "vue-router";
-import axiosClient from "../axios";
-import useUserStore from "../store/user";
-import { computed } from "vue";
-import router from "../router";
-
-const userStore = useUserStore();
-
-const user = computed(() => userStore.user);
-
-const navigation = [
-  {
-    name: "Dashboard",
-    to: { name: "Home" },
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"><path fill="currentColor" d="M13 9V3h8v6zM3 13V3h8v10zm10 8V11h8v10zM3 21v-6h8v6zm2-10h4V5H5zm10 8h4v-6h-4zm0-12h4V5h-4zM5 19h4v-2H5zm4-2"/></svg>`,
-  },
-   {
-    name: "History",
-    to: { name: "History" },
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21q-3.15 0-5.575-1.912T3.275 14.2q-.1-.375.15-.687t.675-.363q.4-.05.725.15t.45.6q.6 2.25 2.475 3.675T12 19q2.925 0 4.963-2.037T19 12t-2.037-4.962T12 5q-1.725 0-3.225.8T6.25 8H8q.425 0 .713.288T9 9t-.288.713T8 10H4q-.425 0-.712-.288T3 9V5q0-.425.288-.712T4 4t.713.288T5 5v1.35q1.275-1.6 3.113-2.475T12 3q1.875 0 3.513.713t2.85 1.924t1.925 2.85T21 12t-.712 3.513t-1.925 2.85t-2.85 1.925T12 21m1-9.4l2.5 2.5q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-2.8-2.8q-.15-.15-.225-.337T11 11.975V8q0-.425.288-.712T12 7t.713.288T13 8z"/></svg>`,
-  },
-  {
-    name: "Warranty",
-    to: { name: "MyWarranty" },
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="4"><rect width="36" height="36" x="6" y="6" rx="3"/><path stroke-linecap="round" d="M6 17h36M17 42V17"/></g></svg>`,
-  },
-  {
-    name: "Invoice",
-    to: { name: "MyInvoice" },
-    icon: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M340-460h280v-64H340v64Zm0 120h280v-64H340v64Zm0 120h174v-64H340v64ZM263.72-96Q234-96 213-117.15T192-168v-624q0-29.7 21.15-50.85Q234.3-864 264-864h312l192 192v504q0 29.7-21.16 50.85Q725.68-96 695.96-96H263.72ZM528-624v-168H264v624h432v-456H528ZM264-792v168-168 624-624Z"/></svg>`,
-  },
-];
-const userNavigation = [
-  {
-    name: "Your Profile",
-    to: { name: "YourProfile" },
-    icon: `<svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  height="24px"
-                  viewBox="0 -960 960 960"
-                  width="24px"
-                  fill="#000000"
-                >
-                  <path
-                    d="M480-480q-60 0-102-42t-42-102q0-60 42-102t102-42q60 0 102 42t42 102q0 60-42 102t-102 42ZM192-192v-96q0-23 12.5-43.5T239-366q55-32 116.29-49 61.29-17 124.5-17t124.71 17Q666-398 721-366q22 13 34.5 34t12.5 44v96H192Zm72-72h432v-24q0-5.18-3.03-9.41-3.02-4.24-7.97-6.59-46-28-98-42t-107-14q-55 0-107 14t-98 42q-5 4-8 7.72-3 3.73-3 8.28v24Zm216.21-288Q510-552 531-573.21t21-51Q552-654 530.79-675t-51-21Q450-696 429-674.79t-21 51Q408-594 429.21-573t51 21Zm-.21-72Zm0 360Z"
-                  />
-                </svg>`,
-  },
-];
-
-function logout() {
-  axiosClient.post("logout").then((response) => {
-    router.push({ name: "Login" });
-  });
-}
-</script>
 <style scoped></style>
