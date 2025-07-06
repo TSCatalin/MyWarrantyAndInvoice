@@ -42,6 +42,7 @@ class InvoiceController extends Controller
         } else {
             $invoicesQuery->orderByDesc("created_at");
         }
+
         $invoices = $invoicesQuery->paginate(8);
 
         $meta = [
@@ -72,7 +73,6 @@ class InvoiceController extends Controller
         $data['seller'] = strtoupper($data['seller']);
 
         $file = $request->file('invoice_file');
-
         $fileContent = file_get_contents($file->getRealPath());
 
         $data['invoice_file'] = $fileContent;
@@ -113,7 +113,6 @@ class InvoiceController extends Controller
         if ($file) {
             $file = $request->file('invoice_file');
             $fileContent = file_get_contents($file->getRealPath());
-
             $data['invoice_file'] = $fileContent;
         }
         $invoice->update($data);
@@ -150,6 +149,7 @@ class InvoiceController extends Controller
         $userId = Auth::id();
         $invoicesQuery = Invoice::where('user_id', $userId);
         $invoices = $invoicesQuery->get(['invoice_number'])->sortByDesc("created_at");
+
         $invoiceNumbers = $invoices->pluck('invoice_number');
 
         return response()->json([
@@ -165,7 +165,6 @@ class InvoiceController extends Controller
         $oneMonthAgo = now()->subMonth();
         $invoicesCountLastMonth = $query->where('created_at', '>=', $oneMonthAgo)->count();
         $invoices = $query->orderByDesc("created_at")->take(3)->get();
-
         $sumByCurrency = $query->selectRaw('currency, ROUND(SUM(value), 2) as total')
             ->groupBy('currency')
             ->get();

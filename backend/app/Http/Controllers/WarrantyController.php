@@ -8,12 +8,16 @@ use App\Http\Requests\UpdateWarrantyRequest;
 use App\Http\Resources\WarrantyResource;
 use App\Jobs\UpdateWarrantyStatus;
 use App\Models\ActionHistory;
+use App\Models\User;
+use App\Notifications\UserNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Notifiable;
 
 class WarrantyController extends Controller
 {
+    use Notifiable;
     /**
      * Display a listing of the resource.
      */
@@ -25,9 +29,11 @@ class WarrantyController extends Controller
         if ($request->query('seller')) {
             $warrantiesQuery->where('seller', $request->query('seller'));
         }
+
         if ($request->query('status') !== null) {
             $warrantiesQuery->where('status', $request->query('status'));
         }
+
         if ($request->query('product_name')) {
             $warrantiesQuery->where('product_name',  "like", "%" . $request->query('product_name') . "%");
         }
@@ -54,6 +60,7 @@ class WarrantyController extends Controller
         }
 
         $warranties = $warrantiesQuery->paginate(9);
+
         $meta = [
             'current_page' => $warranties->currentPage(),
             'last_page' => $warranties->lastPage(),
@@ -82,6 +89,7 @@ class WarrantyController extends Controller
         $data = $request->validated();
         $data['user_id'] = Auth::id();
         $data['seller'] = strtoupper($data['seller']);
+
         $warrantyEndDate = strtotime($data['warranty_end_date']);
         $currentDate = strtotime('today');
         
@@ -92,10 +100,13 @@ class WarrantyController extends Controller
         }
 
         $file = $request->file('warranty_file');
+
         $fileContent = file_get_contents($file->getRealPath());
+
         $data['warranty_file'] = $fileContent;
 
         Warranty::create($data);
+
         ActionHistory::create([
             "type_action" => 'CREATE',
             "info_action" => 'Warranty #' . $data['warranty_id'] . ' has been added.',
@@ -138,6 +149,7 @@ class WarrantyController extends Controller
         if ($file) {
             $file = $request->file('warranty_file');
             $fileContent = file_get_contents($file->getRealPath());
+
             $data['warranty_file'] = $fileContent;
         }
         $warranty->update($data);
@@ -156,7 +168,9 @@ class WarrantyController extends Controller
     public function destroy(Warranty $warranty)
     {
         $warranty_id = $warranty->warranty_id;
+
         $warranty->delete();
+
         ActionHistory::create([
             "type_action" => 'DELETE',
             "info_action" => 'Warranty #' . $warranty_id . ' has been deleted.',
@@ -164,6 +178,15 @@ class WarrantyController extends Controller
             "user_id" => Auth::id(),
         ]);
 
+        $userId = Auth::id();
+        $user = User::find($userId);
+        if ($user) {
+            $user->notify(new UserNotification(
+                'Warranty deleted',
+                'Warranty #' . $warranty_id . ' has been deleted.',
+                '/warranty'
+            ));
+        }
 
         return response(null, 204);
     }
@@ -172,10 +195,13 @@ class WarrantyController extends Controller
     {
         $userId = Auth::id();
         $warrantiesQuery = Warranty::where('user_id', $userId);
+
         if ($request->query('invoice_number')) {
             $warrantiesQuery->where('invoice_number', $request->query('invoice_number'));
         }
+
         $warrantiesVal = $warrantiesQuery->get();
+
         $warranties = $warrantiesVal->map(function ($warranty) {
             return [
                 'id' => $warranty->id,
@@ -186,6 +212,7 @@ class WarrantyController extends Controller
                 'warranty_end_date' => $warranty->warranty_end_date,
             ];
         });
+
         return response()->json([
             'data' => $warranties,
         ]);
@@ -195,6 +222,7 @@ class WarrantyController extends Controller
     {
         $userId = Auth::id();
         UpdateWarrantyStatus::dispatch($userId);
+
         return response(null, 204);
     }
 
@@ -202,14 +230,12 @@ class WarrantyController extends Controller
     {
         $userId = Auth::id();
         $query = Warranty::where('user_id', $userId);
-
         $warrantiesCount = $query->count();
         $oneMonthAgo = now()->subMonth();
         $warrantiesCountLastMonth = $query->where('created_at', '>=', $oneMonthAgo)->count();
         $warranties = $query->orderByDesc("created_at")->take(3)->get();
         $warrantiesCountStatus1 = $query->where('status', 1)->count();
         $warrantiesCountStatus0 =  $warrantiesCount - $warrantiesCountStatus1;
-
 
         return response()->json([
             'warranties_count' => $warrantiesCount,

@@ -62,5 +62,4 @@ class WarrantyFactory extends Factory
                 return null;
         }
     }
-
 }
